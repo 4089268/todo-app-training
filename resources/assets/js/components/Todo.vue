@@ -41,27 +41,43 @@
             }
         },
         mounted () {
-            this.items = [
-                { text: 'Primer recordatorio', done: true },
-                { text: 'Segundo recordatorio', done: false },
-                { text: 'Tercero recordatorio', done: false },
-                { text: 'Cuarto recordatorio', done: true },
-                { text: 'Quinto recordatorio', done: false },
-            ]
+            var xthis1 = this;
+
+            axios.get('/api/todos/').then(function(response){
+                xthis1.items = response.data;
+            });
         },
         methods: {
             addTodo () {
+                var xthis2 = this;
                 let text = this.todoItemText.trim()
                 if (text !== '') {
-                    this.items.push({ text: text, done: false })
-                    this.todoItemText = ''
+
+                    axios.post('/api/todos/',{ 'text': text }).then(function(response){
+                        xthis2.items.push(response.data);
+                        xthis2.todoItemText = '';
+                    });                    
                 }
             },
             removeTodo (todo) {
-                this.items = this.items.filter(item => item !== todo)
+                var xthis3 = this;
+                axios.delete('/api/todos/' + todo.id).then(function(response){
+                    switch(response.status){
+                        case(200):
+                            xthis3.items = xthis3.items.filter(item => item !== todo);
+                            alert("Borrado");
+                        break;
+                        default:
+                            alert("Err");
+                        break;
+                    }   
+                });
+
             },
-            toggleDone (todo) {
-                todo.done = !todo.done
+            toggleDone (todo) {                
+                axios.put('/api/todos/' + todo.id).then(function(response){
+                    todo.done = response.data.done;
+                });
             }
         }
     }
