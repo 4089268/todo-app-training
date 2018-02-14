@@ -1,38 +1,16 @@
 <template>
     <div class="container">
         <div class="box">
-            <div class="field is-grouped">
-                <p class="control is-expanded">
-                    <input class="input" type="text" placeholder="Nuevo recordatorio" v-model="todoItemText">
-                </p>
-                <p class="control">
-                    <a class="button is-info" @click="addTodo">
-                        Agregar
-                    </a>
-                </p>
-            </div>
+             <todo-input @addTodo="addTodo($event)"></todo-input>
         </div>
         <table class="table is-bordered">
-            <tr v-for="(todo, index) in items" :key="index">
-                <td class="is-fullwidth" style="cursor: pointer" :class="{ 'is-done': todo.done }" @click="toggleDone(todo)">
-                    {{ todo.text }}
-                </td>
-                <td class="is-narrow">
-                    <a class="button is-danger is-small" @click="removeTodo(todo)">Eliminar</a>
-                </td>
-            </tr>
+            <todo-item v-for="todo in items" :text=todo.text :done=todo.done :id=todo.id @toggleDone=toggleDone($event) @removeTodo=removeTodo($event)>
+            </todo-item>
         </table>
     </div>
 </template>
 
-<script>
-    /**
-     * Tips:
-     * - En mounted pueden obtener el listado del backend de todos y dentro de la promesa de axios asirnarlo
-     *   al arreglo que debe tener una estructura similar a los datos de ejemplo.
-     * - En addTodo, removeTodo y toggleTodo deben hacer los cambios pertinentes para que las modificaciones,
-     *   addiciones o elimicaiones tomen efecto en el backend asi como la base de datos.
-     */
+<script>    
     export default {
         data () {
             return {
@@ -48,23 +26,21 @@
             });
         },
         methods: {
-            addTodo () {
-                var xthis2 = this;
-                let text = this.todoItemText.trim()
-                if (text !== '') {
-
+            addTodo (text) {
+                var xthis2 = this;                
+                if (text !== '') {                    
                     axios.post('/api/todos/',{ 'text': text }).then(function(response){
                         xthis2.items.push(response.data);
                         xthis2.todoItemText = '';
                     });                    
                 }
             },
-            removeTodo (todo) {
+            removeTodo (id) {
                 var xthis3 = this;
-                axios.delete('/api/todos/' + todo.id).then(function(response){
+                axios.delete('/api/todos/' + id).then(function(response){
                     switch(response.status){
                         case(200):
-                            xthis3.items = xthis3.items.filter(item => item !== todo);
+                            xthis3.items = xthis3.items.filter(item => item.id !== id);
                             alert("Borrado");
                         break;
                         default:
@@ -72,11 +48,12 @@
                         break;
                     }   
                 });
-
             },
-            toggleDone (todo) {                
-                axios.put('/api/todos/' + todo.id).then(function(response){
-                    todo.done = response.data.done;
+            toggleDone (id) {   
+                var xthis4 = this;
+                axios.put('/api/todos/' + id).then(function(response){
+                    var todo = xthis4.items.filter(item => item.id == response.data.id);
+                    todo[0].done= response.data.done;                                        
                 });
             }
         }
